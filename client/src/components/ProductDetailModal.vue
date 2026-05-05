@@ -4,10 +4,15 @@
       <div v-if="isOpen && product" class="modal-overlay" @click="close">
         <div class="modal-container" @click.stop>
           <div class="modal-header">
-            <h3 class="modal-title">Product Details</h3>
+            <h3 class="modal-title">{{ t("productDetail.title") }}</h3>
             <button class="close-button" @click="close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path
+                  d="M15 5L5 15M5 5L15 15"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
           </div>
@@ -16,60 +21,116 @@
             <div class="product-header">
               <div class="product-icon">
                 <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                  <rect x="8" y="12" width="32" height="28" rx="2" stroke="currentColor" stroke-width="2.5"/>
-                  <path d="M16 8V16M32 8V16M8 20H40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <rect
+                    x="8"
+                    y="12"
+                    width="32"
+                    height="28"
+                    rx="2"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  />
+                  <path
+                    d="M16 8V16M32 8V16M8 20H40"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  />
                 </svg>
               </div>
               <div class="product-title-section">
-                <h4 class="product-name">{{ product.name }}</h4>
-                <div class="product-sku">SKU: {{ product.sku }}</div>
+                <h4 class="product-name">
+                  {{ translateProductName(product.name) }}
+                </h4>
+                <div class="product-sku">
+                  {{ t("inventory.table.sku") }}: {{ product.sku }}
+                </div>
               </div>
-              <span class="stock-badge" :class="getStockBadgeClass(product.stockLevel)">
-                {{ product.stockLevel }}
+              <span
+                class="stock-badge"
+                :class="getStockBadgeClass(product.stockLevel)"
+              >
+                {{ translateStockLevel(product.stockLevel) }}
               </span>
             </div>
 
             <div class="info-grid">
               <div class="info-item">
-                <div class="info-label">Category</div>
-                <div class="info-value">{{ product.category }}</div>
+                <div class="info-label">
+                  {{ t("inventory.table.category") }}
+                </div>
+                <div class="info-value">
+                  {{ translateCategory(product.category) }}
+                </div>
               </div>
 
               <div class="info-item">
-                <div class="info-label">Warehouse</div>
-                <div class="info-value">{{ product.warehouse }}</div>
+                <div class="info-label">
+                  {{ t("inventory.table.warehouse") }}
+                </div>
+                <div class="info-value">
+                  {{ translateWarehouse(product.warehouse) }}
+                </div>
               </div>
 
               <div class="info-item">
-                <div class="info-label">Units Ordered</div>
+                <div class="info-label">
+                  {{ t("dashboard.topProducts.unitsOrdered") }}
+                </div>
                 <div class="info-value">{{ product.unitsOrdered }}</div>
               </div>
 
               <div class="info-item">
-                <div class="info-label">Total Revenue</div>
-                <div class="info-value">{{ currencySymbol }}{{ product.revenue.toLocaleString() }}</div>
-              </div>
-
-              <div class="info-item">
-                <div class="info-label">Current Stock</div>
-                <div class="info-value">{{ product.quantityOnHand }} units</div>
-              </div>
-
-              <div class="info-item">
-                <div class="info-label">Reorder Point</div>
-                <div class="info-value">{{ product.reorderPoint }} units</div>
-              </div>
-
-              <div class="info-item">
-                <div class="info-label">First Order Date</div>
-                <div class="info-value">{{ formatDate(product.firstOrderDate) }}</div>
-              </div>
-
-              <div class="info-item">
-                <div class="info-label">Stock Status</div>
+                <div class="info-label">
+                  {{ t("productDetail.totalRevenue") }}
+                </div>
                 <div class="info-value">
-                  <span :class="['badge', getStockBadgeClass(product.stockLevel)]">
-                    {{ product.stockLevel }}
+                  {{
+                    formatCurrencyWithDecimals(
+                      product.revenue,
+                      currentCurrency.value,
+                      2,
+                    )
+                  }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  {{ t("productDetail.currentStock") }}
+                </div>
+                <div class="info-value">
+                  {{ product.quantityOnHand }} {{ t("productDetail.units") }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  {{ t("inventory.table.reorderPoint") }}
+                </div>
+                <div class="info-value">
+                  {{ product.reorderPoint }} {{ t("productDetail.units") }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  {{ t("dashboard.topProducts.firstOrder") }}
+                </div>
+                <div class="info-value">
+                  {{ formatDate(product.firstOrderDate) }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  {{ t("dashboard.topProducts.stockStatus") }}
+                </div>
+                <div class="info-value">
+                  <span
+                    :class="['badge', getStockBadgeClass(product.stockLevel)]"
+                  >
+                    {{ translateStockLevel(product.stockLevel) }}
                   </span>
                 </div>
               </div>
@@ -77,7 +138,9 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" @click="close">Close</button>
+            <button class="btn-secondary" @click="close">
+              {{ t("common.close") }}
+            </button>
           </div>
         </div>
       </div>
@@ -86,48 +149,71 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useI18n } from '../composables/useI18n'
+import { useI18n } from "../composables/useI18n";
+import { formatCurrencyWithDecimals } from "../utils/currency";
 
-const { currentCurrency } = useI18n()
+const {
+  t,
+  currentCurrency,
+  currentLocale,
+  translateProductName,
+  translateWarehouse,
+} = useI18n();
 
-const currencySymbol = computed(() => {
-  return currentCurrency.value === 'JPY' ? '¥' : '$'
-})
+const translateCategory = (category) => {
+  const map = {
+    "Circuit Boards": t("categories.circuitBoards"),
+    Sensors: t("categories.sensors"),
+    Actuators: t("categories.actuators"),
+    Controllers: t("categories.controllers"),
+    "Power Supplies": t("categories.powerSupplies"),
+  };
+  return map[category] || category;
+};
+
+const translateStockLevel = (level) => {
+  const map = {
+    "In Stock": t("status.inStock"),
+    "Low Stock": t("status.lowStock"),
+    "Out of Stock": t("status.adequate"),
+  };
+  return map[level] || level;
+};
 
 const props = defineProps({
   isOpen: {
     type: Boolean,
-    default: false
+    default: false,
   },
   product: {
     type: Object,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(["close"]);
 
 const close = () => {
-  emit('close')
-}
+  emit("close");
+};
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+  if (!dateString) return t("common.na");
+  const locale = currentLocale.value === "ja" ? "ja-JP" : "en-US";
+  const date = new Date(dateString);
+  return date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const getStockBadgeClass = (stockLevel) => {
-  if (stockLevel === 'In Stock') return 'success'
-  if (stockLevel === 'Low Stock') return 'warning'
-  if (stockLevel === 'Out of Stock') return 'danger'
-  return 'info'
-}
+  if (stockLevel === "In Stock") return "success";
+  if (stockLevel === "Low Stock") return "warning";
+  if (stockLevel === "Out of Stock") return "danger";
+  return "info";
+};
 </script>
 
 <style scoped>
@@ -232,7 +318,7 @@ const getStockBadgeClass = (stockLevel) => {
 .product-sku {
   font-size: 0.875rem;
   color: #64748b;
-  font-family: 'Monaco', 'Courier New', monospace;
+  font-family: "Monaco", "Courier New", monospace;
 }
 
 .stock-badge {
