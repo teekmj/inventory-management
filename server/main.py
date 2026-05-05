@@ -1,8 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from datetime import datetime, timedelta, timezone
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
+
+# In-memory store for restocking orders — resets on server restart like all mock data
+restocking_orders = []
 
 app = FastAPI(title="Factory Inventory Management System")
 
@@ -119,6 +123,27 @@ class CreatePurchaseOrderRequest(BaseModel):
     unit_cost: float
     expected_delivery_date: str
     notes: Optional[str] = None
+
+class RestockingOrderItem(BaseModel):
+    item_sku: str
+    item_name: str
+    quantity: int
+    unit_cost: float
+    estimated_cost: float
+
+class RestockingOrder(BaseModel):
+    id: str
+    order_number: str
+    items: List[RestockingOrderItem]
+    total_cost: float
+    lead_time_days: int
+    status: str
+    submitted_at: str
+    expected_delivery: str
+
+class CreateRestockingOrderRequest(BaseModel):
+    items: List[RestockingOrderItem] = Field(min_length=1)
+    lead_time_days: int = Field(ge=3, le=90)
 
 # API endpoints
 @app.get("/")
@@ -303,6 +328,62 @@ def get_monthly_trends():
     result = list(months.values())
     result.sort(key=lambda x: x['month'])
     return result
+
+@app.get("/api/restocking/recommendations")
+def get_restocking_recommendations():
+    """Return demand-positive items sorted by gap descending for restocking prioritisation"""
+    # Build SKU → unit_cost lookup; fallback to $25 for SKUs not in inventory
+    inventory_cost_map = {item["sku"]: item["unit_cost"] for item in inventory_items}
+
+    recommendations = []
+    for forecast in demand_forecasts:
+        gap = forecast["forecasted_demand"] - forecast["current_demand"]
+        if gap <= 0:
+            continue  # Item already meets or exceeds demand — no restocking needed
+
+        unit_cost = inventory_cost_map.get(forecast["item_sku"], 25.0)
+        recommendations.append({
+            "item_sku": forecast["item_sku"],
+            "item_name": forecast["item_name"],
+            "current_demand": forecast["current_demand"],
+            "forecasted_demand": forecast["forecasted_demand"],
+            "gap": gap,
+            "trend": forecast["trend"],
+            "unit_cost": unit_cost,
+            "restock_quantity": gap,
+            "estimated_cost": round(gap * unit_cost, 2)
+        })
+
+    # Highest gap first — biggest supply shortfalls take priority
+    recommendations.sort(key=lambda x: x["gap"], reverse=True)
+    return recommendations
+
+@app.get("/api/restocking-orders")
+def get_restocking_orders():
+    """Get all submitted restocking orders"""
+    return restocking_orders
+
+@app.post("/api/restocking-orders", status_code=201, response_model=RestockingOrder)
+def create_restocking_order(request: CreateRestockingOrderRequest):
+    """Submit a new restocking order; persists in memory for the server lifetime"""
+    now = datetime.now(timezone.utc)
+    expected = now + timedelta(days=request.lead_time_days)
+    seq = len(restocking_orders) + 1
+    total_cost = round(sum(item.estimated_cost for item in request.items), 2)
+
+    new_order = {
+        "id": f"rst-{seq:03d}",
+        "order_number": f"RST-{seq:04d}",
+        "items": [item.model_dump() for item in request.items],
+        "total_cost": total_cost,
+        "lead_time_days": request.lead_time_days,
+        "status": "Processing",
+        "submitted_at": now.isoformat(),
+        "expected_delivery": expected.isoformat()
+    }
+
+    restocking_orders.append(new_order)
+    return new_order
 
 if __name__ == "__main__":
     import uvicorn

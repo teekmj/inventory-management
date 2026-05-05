@@ -188,6 +188,37 @@ export default {
     }
   },
 
+  // Restocking
+  restocking: {
+    title: 'Restocking',
+    description: 'Configure your budget, review demand-driven recommendations, and place restocking orders.',
+    submitted: 'submitted',
+    estimatedDelivery: 'estimated delivery in {days} days',
+    dismiss: 'Dismiss',
+    budget: {
+      title: 'Budget Configuration',
+      availableBudget: 'Available Budget',
+      leadTime: 'Delivery Lead Time',
+      days: 'days',
+      budgetUsed: 'Budget Used:',
+    },
+    recommendations: {
+      title: 'Recommended Items',
+      loading: 'Loading recommendations...',
+      sku: 'SKU',
+      itemName: 'Item Name',
+      trend: 'Trend',
+      current: 'Current',
+      forecasted: 'Forecasted',
+      gap: 'Gap',
+      unitCost: 'Unit Cost',
+      qty: 'Qty',
+      estCost: 'Est. Cost',
+    },
+    placeOrder: 'Place Order',
+    submitting: 'Submitting...',
+  },
+
   // Filters
   filters: {
     timePeriod: 'Time Period',
