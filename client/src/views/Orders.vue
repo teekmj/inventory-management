@@ -42,7 +42,7 @@
               </td>
               <td class="col-lead">{{ rOrder.lead_time_days }} days</td>
               <td class="col-status">
-                <span class="badge warning">Processing</span>
+                <span :class="['badge', getOrderStatusClass(rOrder.status)]">{{ rOrder.status }}</span>
               </td>
               <td class="col-date">{{ formatDate(rOrder.submitted_at) }}</td>
               <td class="col-date">{{ formatDate(rOrder.expected_delivery) }}</td>

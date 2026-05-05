@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-from pydantic import BaseModel
-from datetime import datetime, timedelta
+from pydantic import BaseModel, Field
+from datetime import datetime, timedelta, timezone
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
 
 # In-memory store for restocking orders — resets on server restart like all mock data
@@ -142,9 +142,8 @@ class RestockingOrder(BaseModel):
     expected_delivery: str
 
 class CreateRestockingOrderRequest(BaseModel):
-    items: List[RestockingOrderItem]
-    total_cost: float
-    lead_time_days: int
+    items: List[RestockingOrderItem] = Field(min_length=1)
+    lead_time_days: int = Field(ge=3, le=90)
 
 # API endpoints
 @app.get("/")
@@ -364,18 +363,19 @@ def get_restocking_orders():
     """Get all submitted restocking orders"""
     return restocking_orders
 
-@app.post("/api/restocking-orders", status_code=201)
+@app.post("/api/restocking-orders", status_code=201, response_model=RestockingOrder)
 def create_restocking_order(request: CreateRestockingOrderRequest):
     """Submit a new restocking order; persists in memory for the server lifetime"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expected = now + timedelta(days=request.lead_time_days)
     seq = len(restocking_orders) + 1
+    total_cost = round(sum(item.estimated_cost for item in request.items), 2)
 
     new_order = {
         "id": f"rst-{seq:03d}",
         "order_number": f"RST-{seq:04d}",
         "items": [item.model_dump() for item in request.items],
-        "total_cost": request.total_cost,
+        "total_cost": total_cost,
         "lead_time_days": request.lead_time_days,
         "status": "Processing",
         "submitted_at": now.isoformat(),

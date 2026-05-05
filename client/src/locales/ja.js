@@ -188,6 +188,37 @@ export default {
     }
   },
 
+  // Restocking
+  restocking: {
+    title: '補充発注',
+    description: '予算を設定し、需要予測に基づく推奨品目を確認して補充注文を発注してください。',
+    submitted: '提出済み',
+    estimatedDelivery: '推定納品まで{days}日',
+    dismiss: '閉じる',
+    budget: {
+      title: '予算設定',
+      availableBudget: '利用可能予算',
+      leadTime: '納品リードタイム',
+      days: '日',
+      budgetUsed: '使用予算:',
+    },
+    recommendations: {
+      title: '推奨品目',
+      loading: '推奨を読み込み中...',
+      sku: 'SKU',
+      itemName: '品目名',
+      trend: 'トレンド',
+      current: '現在',
+      forecasted: '予測',
+      gap: 'ギャップ',
+      unitCost: '単価',
+      qty: '数量',
+      estCost: '推定費用',
+    },
+    placeOrder: '注文を発注',
+    submitting: '送信中...',
+  },
+
   // Filters
   filters: {
     timePeriod: '期間',

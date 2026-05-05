@@ -1,24 +1,24 @@
 <template>
   <div class="restocking">
     <div class="page-header">
-      <h2>Restocking</h2>
-      <p>Configure your budget, review demand-driven recommendations, and place restocking orders.</p>
+      <h2>{{ t('restocking.title') }}</h2>
+      <p>{{ t('restocking.description') }}</p>
     </div>
 
     <!-- Success banner -->
     <div v-if="lastOrder" class="success-banner">
-      <strong>{{ lastOrder.order_number }}</strong> submitted — estimated delivery in {{ leadTime }} days
-      <button class="dismiss-btn" @click="lastOrder = null">Dismiss</button>
+      <strong>{{ lastOrder.order_number }}</strong> {{ t('restocking.submitted') }} — {{ t('restocking.estimatedDelivery', { days: leadTime }) }}
+      <button class="dismiss-btn" @click="lastOrder = null">{{ t('restocking.dismiss') }}</button>
     </div>
 
     <!-- Budget Configuration -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Budget Configuration</h3>
+        <h3 class="card-title">{{ t('restocking.budget.title') }}</h3>
       </div>
       <div class="budget-config">
         <div class="config-row">
-          <label class="config-label">Available Budget</label>
+          <label class="config-label">{{ t('restocking.budget.availableBudget') }}</label>
           <div class="slider-wrapper">
             <input
               type="range"
@@ -37,7 +37,7 @@
           </div>
         </div>
         <div class="config-row lead-time-row">
-          <label class="config-label">Delivery Lead Time</label>
+          <label class="config-label">{{ t('restocking.budget.leadTime') }}</label>
           <div class="lead-time-input">
             <input
               type="number"
@@ -45,8 +45,9 @@
               max="30"
               v-model.number="leadTime"
               class="number-input"
+              @change="clampLeadTime"
             />
-            <span class="days-suffix">days</span>
+            <span class="days-suffix">{{ t('restocking.budget.days') }}</span>
           </div>
         </div>
       </div>
@@ -55,7 +56,7 @@
     <!-- Recommendations -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Recommended Items</h3>
+        <h3 class="card-title">{{ t('restocking.recommendations.title') }}</h3>
         <div class="budget-summary">
           <span :class="['budget-status', { 'over-budget': isOverBudget }]">
             {{ formatCurrency(selectedCost) }} / {{ formatCurrency(budget) }}
@@ -66,7 +67,7 @@
       <!-- Budget usage bar -->
       <div class="budget-bar-container">
         <div class="budget-bar-label">
-          Budget Used: <strong>{{ formatCurrency(selectedCost) }}</strong> / {{ formatCurrency(budget) }}
+          {{ t('restocking.budget.budgetUsed') }} <strong>{{ formatCurrency(selectedCost) }}</strong> / {{ formatCurrency(budget) }}
         </div>
         <div class="budget-bar-track">
           <div
@@ -76,7 +77,7 @@
         </div>
       </div>
 
-      <div v-if="loading" class="loading">Loading recommendations...</div>
+      <div v-if="loading" class="loading">{{ t('restocking.recommendations.loading') }}</div>
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else>
         <div class="table-container">
@@ -84,15 +85,15 @@
             <thead>
               <tr>
                 <th class="col-check"></th>
-                <th class="col-sku">SKU</th>
-                <th class="col-name">Item Name</th>
-                <th class="col-trend">Trend</th>
-                <th class="col-num">Current</th>
-                <th class="col-num">Forecasted</th>
-                <th class="col-num">Gap</th>
-                <th class="col-num">Unit Cost</th>
-                <th class="col-num">Qty</th>
-                <th class="col-cost">Est. Cost</th>
+                <th class="col-sku">{{ t('restocking.recommendations.sku') }}</th>
+                <th class="col-name">{{ t('restocking.recommendations.itemName') }}</th>
+                <th class="col-trend">{{ t('restocking.recommendations.trend') }}</th>
+                <th class="col-num">{{ t('restocking.recommendations.current') }}</th>
+                <th class="col-num">{{ t('restocking.recommendations.forecasted') }}</th>
+                <th class="col-num">{{ t('restocking.recommendations.gap') }}</th>
+                <th class="col-num">{{ t('restocking.recommendations.unitCost') }}</th>
+                <th class="col-num">{{ t('restocking.recommendations.qty') }}</th>
+                <th class="col-cost">{{ t('restocking.recommendations.estCost') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -136,9 +137,9 @@
             :disabled="selectedItems.length === 0 || submitting"
             @click="placeOrder"
           >
-            <span v-if="submitting">Submitting...</span>
-            <span v-else-if="selectedItems.length === 0">Place Order</span>
-            <span v-else>Place Order ({{ selectedItems.length }} item{{ selectedItems.length === 1 ? '' : 's' }} &middot; {{ formatCurrency(selectedCost) }})</span>
+            <span v-if="submitting">{{ t('restocking.submitting') }}</span>
+            <span v-else-if="selectedItems.length === 0">{{ t('restocking.placeOrder') }}</span>
+            <span v-else>{{ t('restocking.placeOrder') }} ({{ selectedItems.length }} item{{ selectedItems.length === 1 ? '' : 's' }} &middot; {{ formatCurrency(selectedCost) }})</span>
           </button>
         </div>
       </div>
@@ -149,10 +150,13 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { api } from '../api'
+import { useI18n } from '../composables/useI18n'
+import { formatCurrency as formatCurrencyUtil } from '../utils/currency'
 
 export default {
   name: 'Restocking',
   setup() {
+    const { t, currentCurrency } = useI18n()
     const budget = ref(10000)
     const leadTime = ref(7)
     const recommendations = ref([])
@@ -234,9 +238,11 @@ export default {
       manualOverrides.value = newMap
     }
 
-    const formatCurrency = (value) => {
-      return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+    const clampLeadTime = () => {
+      leadTime.value = Math.min(90, Math.max(3, leadTime.value || 3))
     }
+
+    const formatCurrency = (value) => formatCurrencyUtil(value, currentCurrency.value)
 
     const placeOrder = async () => {
       if (selectedItems.value.length === 0) return
@@ -251,7 +257,6 @@ export default {
             unit_cost: item.unit_cost,
             estimated_cost: item.estimated_cost
           })),
-          total_cost: selectedCost.value,
           lead_time_days: leadTime.value
         }
         const order = await api.submitRestockingOrder(payload)
@@ -268,6 +273,7 @@ export default {
     onMounted(loadRecommendations)
 
     return {
+      t,
       budget,
       leadTime,
       recommendations,
@@ -275,7 +281,6 @@ export default {
       error,
       submitting,
       lastOrder,
-      autoSelected,
       selectedSkus,
       selectedItems,
       selectedCost,
@@ -283,6 +288,7 @@ export default {
       budgetUsagePercent,
       sliderFillStyle,
       toggleItem,
+      clampLeadTime,
       formatCurrency,
       placeOrder
     }
